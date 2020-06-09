@@ -17,7 +17,7 @@
 
 namespace ql
 {
-    static bool lc_cycle_lessthan(ql::gate* gp1, ql::gate* gp2)
+    static bool lc_cycle_lessthan(std::shared_ptr<ql::gate> gp1, std::shared_ptr<ql::gate> gp2)
     {
         return gp1->cycle < gp2->cycle;
     }

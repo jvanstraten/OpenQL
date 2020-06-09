@@ -20,7 +20,7 @@ namespace ql
 {
     namespace ir
     {
-        typedef std::list<ql::gate *>section_t;
+        typedef std::list<std::shared_ptr<ql::gate>>section_t;
         class bundle_t
         {
         public:

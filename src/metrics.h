@@ -319,7 +319,7 @@ public:
 }; //class end
 
 
-	double quick_fidelity(std::list< ql::gate * > gate_list )
+	double quick_fidelity(std::list<std::shared_ptr<ql::gate>> gate_list )
 	{
 		ql::Metrics estimator(17);
 		std::vector<double> previous_fids;

@@ -166,7 +166,7 @@ public:
     {
         std::string gname("rx");    // FIXME: unused
         // to do : rotation decomposition
-        c.push_back(new ql::rx(qubit,angle));
+        c.emplace_back(new ql::rx(qubit,angle));
         cycles_valid = false;
     }
 
@@ -174,7 +174,7 @@ public:
     {
         std::string gname("ry");    // FIXME: unused
         // to do : rotation decomposition
-        c.push_back(new ql::ry(qubit,angle));
+        c.emplace_back(new ql::ry(qubit,angle));
         cycles_valid = false;
     }
 
@@ -182,7 +182,7 @@ public:
     {
         std::string gname("rz");    // FIXME: unused
         // to do : rotation decomposition
-        c.push_back(new ql::rz(qubit,angle));
+        c.emplace_back(new ql::rz(qubit,angle));
         cycles_valid = false;
     }
 
@@ -279,7 +279,7 @@ public:
     void toffoli(size_t qubit1, size_t qubit2, size_t qubit3)
     {
         // TODO add custom gate check if needed
-        c.push_back(new ql::toffoli(qubit1, qubit2, qubit3));
+        c.emplace_back(new ql::toffoli(qubit1, qubit2, qubit3));
         cycles_valid = false;
     }
 
@@ -295,7 +295,7 @@ public:
 
     void display()
     {
-        c.push_back(new ql::display());
+        c.emplace_back(new ql::display());
         cycles_valid = false;
     }
 
@@ -459,121 +459,121 @@ private:
 
         if( gname == "identity" || gname == "i" )
         {
-            c.push_back(new ql::identity(qubits[0]) );
+            c.emplace_back(new ql::identity(qubits[0]) );
             result = true;
         }
         else if( gname == "hadamard" || gname == "h" )
         {
-            c.push_back(new ql::hadamard(qubits[0]) );
+            c.emplace_back(new ql::hadamard(qubits[0]) );
             result = true;
         }
         else if( gname == "pauli_x" || gname == "x" )
         {
-            c.push_back(new ql::pauli_x(qubits[0]) );
+            c.emplace_back(new ql::pauli_x(qubits[0]) );
             result = true;
         }
         else if( gname == "pauli_y" || gname == "y" )
         {
-            c.push_back(new ql::pauli_y(qubits[0]) );
+            c.emplace_back(new ql::pauli_y(qubits[0]) );
             result = true;
         }
         else if( gname == "pauli_z" || gname == "z" )
         {
-            c.push_back(new ql::pauli_z(qubits[0]) );
+            c.emplace_back(new ql::pauli_z(qubits[0]) );
             result = true;
         }
         else if( gname == "s" || gname == "phase" )
         {
-            c.push_back(new ql::phase(qubits[0]) );
+            c.emplace_back(new ql::phase(qubits[0]) );
             result = true;
         }
         else if( gname == "sdag" || gname == "phasedag" )
         {
-            c.push_back(new ql::phasedag(qubits[0]) );
+            c.emplace_back(new ql::phasedag(qubits[0]) );
             result = true;
         }
         else if( gname == "t" )
         {
-            c.push_back(new ql::t(qubits[0]) );
+            c.emplace_back(new ql::t(qubits[0]) );
             result = true;
         }
         else if( gname == "tdag" )
         {
-            c.push_back(new ql::tdag(qubits[0]) );
+            c.emplace_back(new ql::tdag(qubits[0]) );
             result = true;
         }
         else if( gname == "rx" )
         {
-            c.push_back(new ql::rx(qubits[0], angle));
+            c.emplace_back(new ql::rx(qubits[0], angle));
             result = true;
         }
         else if( gname == "ry" )
         {
-            c.push_back(new ql::ry(qubits[0], angle));
+            c.emplace_back(new ql::ry(qubits[0], angle));
             result = true;
         }
         else if( gname == "rz" )
         {
-            c.push_back(new ql::rz(qubits[0], angle));
+            c.emplace_back(new ql::rz(qubits[0], angle));
             result = true;
         }
         else if( gname == "rx90" )
         {
-            c.push_back(new ql::rx90(qubits[0]) );
+            c.emplace_back(new ql::rx90(qubits[0]) );
             result = true;
         }
         else if( gname == "mrx90" )
         {
-            c.push_back(new ql::mrx90(qubits[0]) );
+            c.emplace_back(new ql::mrx90(qubits[0]) );
             result = true;
         }
         else if( gname == "rx180" )
         {
-            c.push_back(new ql::rx180(qubits[0]) );
+            c.emplace_back(new ql::rx180(qubits[0]) );
             result = true;
         }
         else if( gname == "ry90" )
         {
-            c.push_back(new ql::ry90(qubits[0]) );
+            c.emplace_back(new ql::ry90(qubits[0]) );
             result = true;
         }
         else if( gname == "mry90" )
         {
-            c.push_back(new ql::mry90(qubits[0]) );
+            c.emplace_back(new ql::mry90(qubits[0]) );
             result = true;
         }
         else if( gname == "ry180" )
         {
-            c.push_back(new ql::ry180(qubits[0]) );
+            c.emplace_back(new ql::ry180(qubits[0]) );
             result = true;
         }
         else if( gname == "measure" )
         {
             if(cregs.empty())
-                c.push_back(new ql::measure(qubits[0]) );
+                c.emplace_back(new ql::measure(qubits[0]) );
             else
-                c.push_back(new ql::measure(qubits[0], cregs[0]) );
+                c.emplace_back(new ql::measure(qubits[0], cregs[0]) );
 
             result = true;
         }
         else if( gname == "prepz" )
         {
-            c.push_back(new ql::prepz(qubits[0]) );
+            c.emplace_back(new ql::prepz(qubits[0]) );
             result = true;
         }
         else if( gname == "cnot" )
         {
-            c.push_back(new ql::cnot(qubits[0], qubits[1]) );
+            c.emplace_back(new ql::cnot(qubits[0], qubits[1]) );
             result = true;
         }
         else if( gname == "cz" || gname == "cphase" )
         {
-            c.push_back(new ql::cphase(qubits[0], qubits[1]) );
+            c.emplace_back(new ql::cphase(qubits[0], qubits[1]) );
             result = true;
         }
         else if( gname == "toffoli" )
-            { c.push_back(new ql::toffoli(qubits[0], qubits[1], qubits[2]) ); result = true; }
-        else if( gname == "swap" )       { c.push_back(new ql::swap(qubits[0], qubits[1]) ); result = true; }
+            { c.emplace_back(new ql::toffoli(qubits[0], qubits[1], qubits[2]) ); result = true; }
+        else if( gname == "swap" )       { c.emplace_back(new ql::swap(qubits[0], qubits[1]) ); result = true; }
         else if( gname == "barrier")
         {
             /*
@@ -586,7 +586,7 @@ private:
                     qubits.push_back(q);
             }
 
-            c.push_back(new ql::wait(qubits, 0, 0));
+            c.emplace_back(new ql::wait(qubits, 0, 0));
             result = true;
         }
         else if( gname == "wait")
@@ -602,7 +602,7 @@ private:
             }
 
             size_t duration_in_cycles = std::ceil(static_cast<float>(duration)/cycle_time);
-            c.push_back(new ql::wait(qubits, duration, duration_in_cycles));
+            c.emplace_back(new ql::wait(qubits, duration, duration_in_cycles));
             result = true;
         }
         else
@@ -639,7 +639,7 @@ private:
         if (it != instruction_map.end())
         {
             // a specialized custom gate is of the form: "cz q0 q3"
-            custom_gate* g = new custom_gate(*(it->second));
+            auto g = std::make_shared<custom_gate>(*(it->second));
             for(auto & qubit : qubits)
                 g->operands.push_back(qubit);
             for(auto & cop : cregs)
@@ -656,7 +656,7 @@ private:
             instruction_map_t::iterator it = instruction_map.find(gname);
             if (it != instruction_map.end())
             {
-                custom_gate* g = new custom_gate(*(it->second));
+                auto g = std::make_shared<custom_gate>(*(it->second));
                 for(auto & qubit : qubits)
                     g->operands.push_back(qubit);
                 for(auto & cop : cregs)
@@ -1183,17 +1183,17 @@ public:
         // DOUT("Adding a multicontrolled rz-gate at start index " << start_index << ", to " << ql::utils::to_string(qubits, "qubits: "));
         int idx;
         //The first one is always controlled from the last to the first qubit.
-        c.push_back(new ql::rz(qubits.back(),-instruction_list[start_index]));
-        c.push_back(new ql::cnot(qubits[0], qubits.back()));
+        c.emplace_back(new ql::rz(qubits.back(),-instruction_list[start_index]));
+        c.emplace_back(new ql::cnot(qubits[0], qubits.back()));
         for(int i = 1; i < end_index - start_index; i++)
         {
             idx = uint64_log2(((i)^((i)>>1))^((i+1)^((i+1)>>1)));
-            c.push_back(new ql::rz(qubits.back(),-instruction_list[i+start_index]));                
-            c.push_back(new ql::cnot(qubits[idx], qubits.back()));
+            c.emplace_back(new ql::rz(qubits.back(),-instruction_list[i+start_index]));
+            c.emplace_back(new ql::cnot(qubits[idx], qubits.back()));
         }
         // The last one is always controlled from the next qubit to the first qubit
-        c.push_back(new ql::rz(qubits.back(),-instruction_list[end_index]));
-        c.push_back(new ql::cnot(qubits.end()[-2], qubits.back()));
+        c.emplace_back(new ql::rz(qubits.back(),-instruction_list[end_index]));
+        c.emplace_back(new ql::cnot(qubits.end()[-2], qubits.back()));
         cycles_valid = false;
     }
 
@@ -1204,18 +1204,18 @@ public:
         int idx;
         
         //The first one is always controlled from the last to the first qubit.
-        c.push_back(new ql::ry(qubits.back(),-instruction_list[start_index]));
-        c.push_back(new ql::cnot(qubits[0], qubits.back()));
+        c.emplace_back(new ql::ry(qubits.back(),-instruction_list[start_index]));
+        c.emplace_back(new ql::cnot(qubits[0], qubits.back()));
 
         for(int i = 1; i < end_index - start_index; i++)
         { 
             idx = uint64_log2 (((i)^((i)>>1))^((i+1)^((i+1)>>1)));
-            c.push_back(new ql::ry(qubits.back(),-instruction_list[i+start_index]));
-            c.push_back(new ql::cnot(qubits[idx], qubits.back()));
+            c.emplace_back(new ql::ry(qubits.back(),-instruction_list[i+start_index]));
+            c.emplace_back(new ql::cnot(qubits[idx], qubits.back()));
         }
         // Last one is controlled from the next qubit to the first one. 
-        c.push_back(new ql::ry(qubits.back(),-instruction_list[end_index]));
-        c.push_back(new ql::cnot(qubits.end()[-2], qubits.back())); 
+        c.emplace_back(new ql::ry(qubits.back(),-instruction_list[end_index]));
+        c.emplace_back(new ql::cnot(qubits.end()[-2], qubits.back()));
         cycles_valid = false;
     }
     // source: https://stackoverflow.com/questions/994593/how-to-do-an-integer-log2-in-c user Todd Lehman
@@ -1329,13 +1329,13 @@ public:
             }
         }
 
-        c.push_back(new ql::classical(destination, oper));
+        c.emplace_back(new ql::classical(destination, oper));
         cycles_valid = false;
     }
 
     void classical(std::string operation)
     {
-        c.push_back(new ql::classical(operation));
+        c.emplace_back(new ql::classical(operation));
         cycles_valid = false;
     }
 

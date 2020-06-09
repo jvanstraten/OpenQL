@@ -170,24 +170,24 @@ protected:
     inline void rotation_optimize_kernel(ql::quantum_kernel& kernel, const ql::quantum_platform & platform)
     {
         DOUT("kernel " << kernel.name << " optimize_kernel(): circuit before optimizing: ");
-        print(kernel.c);
+        kernel.c.print();
         DOUT("... end circuit");
         ql::rotations_merging rm;
-        if (contains_measurements(kernel.c))
+        if (kernel.c.contains_measurements())
         {
             DOUT("kernel contains measurements ...");
             // decompose the circuit
-            std::vector<circuit*> cs = split_circuit(kernel.c);
-            std::vector<circuit > cs_opt;
+            std::vector<circuit> cs = kernel.c.split_circuit();
+            std::vector<circuit> cs_opt;
             for (size_t i=0; i<cs.size(); ++i)
             {
-                if (!contains_measurements(*cs[i]))
+                if (!cs[i].contains_measurements())
                 {
-                    circuit opt = rm.optimize(*cs[i]);
+                    circuit opt = rm.optimize(cs[i]);
                     cs_opt.push_back(opt);
                 }
                 else
-                    cs_opt.push_back(*cs[i]);
+                    cs_opt.push_back(cs[i]);
             }
             // for (int i=0; i<cs_opt.size(); ++i)
             // print(cs_opt[i]);
@@ -202,7 +202,7 @@ protected:
         }
         kernel.cycles_valid = false;
         DOUT("kernel " << kernel.name << " rotation_optimize(): circuit after optimizing: ");
-        print(kernel.c);
+        kernel.c.print();
         DOUT("... end circuit");
     }
 

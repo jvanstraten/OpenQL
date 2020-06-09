@@ -35,7 +35,7 @@ public:
 
 private:
     std::string kernelLabel(ql::quantum_kernel &k);
-    void codegen_classical_instruction(ql::gate *classical_ins);
+    void codegen_classical_instruction(const ql::gate &classical_ins);
     void codegen_kernel_prologue(ql::quantum_kernel &k);
     void codegen_kernel_epilogue(ql::quantum_kernel &k);
     void codegen_bundles(ql::ir::bundles_t &bundles, const ql::quantum_platform &platform);

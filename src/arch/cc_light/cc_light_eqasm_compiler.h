@@ -353,11 +353,11 @@ public:
 
 };
 
-std::string classical_instruction2qisa(ql::arch::classical_cc* classical_ins)
+std::string classical_instruction2qisa(const ql::arch::classical_cc& classical_ins)
 {
     std::stringstream ssclassical;
-    auto & iname =  classical_ins->name;
-    auto & iopers = classical_ins->creg_operands;
+    auto & iname =  classical_ins.name;
+    auto & iopers = classical_ins.creg_operands;
     int iopers_count = iopers.size();
 
     if(  (iname == "add") || (iname == "sub") ||
@@ -375,12 +375,12 @@ std::string classical_instruction2qisa(ql::arch::classical_cc* classical_ins)
         }
         if(iname == "ldi")
         {
-            ssclassical << ", " + std::to_string(classical_ins->int_operand);
+            ssclassical << ", " + std::to_string(classical_ins.int_operand);
         }
     }
     else if(iname == "fmr")
     {
-        ssclassical << "fmr r" << iopers[0] << ", q" << classical_ins->operands[0];
+        ssclassical << "fmr r" << iopers[0] << ", q" << classical_ins.operands[0];
     }
     else if(iname == "fbr_eq")
     {
@@ -567,7 +567,7 @@ std::string ir2qisa(quantum_kernel & kernel,
             if(__classical_gate__ == itype)
             {
                 classical_bundle = true;
-                ssinst << classical_instruction2qisa( (ql::arch::classical_cc *)(*firstInsIt) );
+                ssinst << classical_instruction2qisa( *std::dynamic_pointer_cast<ql::arch::classical_cc>(*firstInsIt) );
             }
             else
             {
@@ -886,7 +886,7 @@ public:
                                         g->operands.push_back(q);
 
                                         ql::ir::section_t asec;
-                                        asec.push_back(g);
+                                        asec.emplace_back(g);
                                         bundles_dst_it->parallel_sections.push_back(asec);
                                     }
                                 }
@@ -1141,34 +1141,34 @@ public:
                   )
                 {
                     // decomp_ckt.push_back(ins);
-                    decomp_ckt.push_back(new ql::arch::classical_cc(iname, icopers));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc(iname, icopers));
                     DOUT("    classical instruction decomposed: " << decomp_ckt.back()->qasm());
                 }
                 else if( (iname == "eq") || (iname == "ne") || (iname == "lt") ||
                          (iname == "gt") || (iname == "le") || (iname == "ge")
                        )
                 {
-                    decomp_ckt.push_back(new ql::arch::classical_cc("cmp", {icopers[1], icopers[2]}));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc("cmp", {icopers[1], icopers[2]}));
                     DOUT("    classical instruction decomposed: " << decomp_ckt.back()->qasm());
-                    decomp_ckt.push_back(new ql::arch::classical_cc("nop", {}));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc("nop", {}));
                     DOUT("                                      " << decomp_ckt.back()->qasm());
-                    decomp_ckt.push_back(new ql::arch::classical_cc("fbr_"+iname, {icopers[0]}));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc("fbr_"+iname, {icopers[0]}));
                     DOUT("                                      " << decomp_ckt.back()->qasm());
                 }
                 else if(iname == "mov")
                 {
                     // r28 is used as temp, TODO use creg properly to create temporary
-                    decomp_ckt.push_back(new ql::arch::classical_cc("ldi", {28}, 0));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc("ldi", {28}, 0));
                     DOUT("    classical instruction decomposed: " << decomp_ckt.back()->qasm());
-                    decomp_ckt.push_back(new ql::arch::classical_cc("add", {icopers[0], icopers[1], 28}));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc("add", {icopers[0], icopers[1], 28}));
                     DOUT("                                      " << decomp_ckt.back()->qasm());
                 }
                 else if(iname == "ldi")
                 {
                     // auto imval = ((classical_cc*)ins)->int_operand;
-                    auto imval = ((classical*)ins)->int_operand;
+                    auto imval = std::dynamic_pointer_cast<classical>(ins)->int_operand;
                     DOUT("    classical instruction decomposed: imval=" << imval);
-                    decomp_ckt.push_back(new ql::arch::classical_cc("ldi", {icopers[0]}, imval));
+                    decomp_ckt.emplace_back(new ql::arch::classical_cc("ldi", {icopers[0]}, imval));
                     DOUT("    classical instruction decomposed: " << decomp_ckt.back()->qasm());
                 }
                 else
@@ -1210,7 +1210,7 @@ public:
                             if(!coperands.empty())
                             {
                                 auto cop = coperands[0];
-                                decomp_ckt.push_back(new ql::arch::classical_cc("fmr", {cop, qop}));
+                                decomp_ckt.emplace_back(new ql::arch::classical_cc("fmr", {cop, qop}));
                             }
                             else
                             {

@@ -159,10 +159,10 @@ void eqasm_backend_cc::compile(quantum_program* programp, const ql::quantum_plat
 
 // based on cc_light_eqasm_compiler.h::classical_instruction2qisa/decompose_instructions
 // NB: input instructions defined in classical.h::classical
-void eqasm_backend_cc::codegen_classical_instruction(ql::gate *classical_ins)
+void eqasm_backend_cc::codegen_classical_instruction(const ql::gate &classical_ins)
 {
-    auto &iname =  classical_ins->name;
-    auto &iopers = classical_ins->creg_operands;
+    auto &iname =  classical_ins.name;
+    auto &iopers = classical_ins.creg_operands;
     int iopers_count = iopers.size();
 
     if(  iname == QASM_ADD || iname == QASM_SUB ||
@@ -321,20 +321,20 @@ void eqasm_backend_cc::codegen_bundles(ql::ir::bundles_t &bundles, const ql::qua
         // generate code for this bundle
         for(auto section = bundle.parallel_sections.begin(); section != bundle.parallel_sections.end(); ++section ) {
             // check whether section defines classical gate
-            ql::gate *firstInstr = *section->begin();
+            auto firstInstr = *section->begin();
             auto firstInstrType = firstInstr->type();
             if(firstInstrType == __classical_gate__) {
                 if(section->size() != 1) {
                     FATAL("Inconsistency detected in bundle contents: classical gate with parallel sections");
                 }
-                codegen_classical_instruction(firstInstr);
+                codegen_classical_instruction(*firstInstr);
             } else {
                 /* iterate over all instructions in section.
                  * NB: our strategy differs from cc_light_eqasm_compiler, we have no special treatment of first instruction
                  * and don't require all instructions to be identical
                  */
                 for(auto insIt = section->begin(); insIt != section->end(); ++insIt) {
-                    ql::gate *instr = *insIt;
+                    auto instr = *insIt;
                     ql::gate_type_t itype = instr->type();
                     std::string iname = instr->name;
 

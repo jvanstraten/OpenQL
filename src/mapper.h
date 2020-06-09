@@ -555,7 +555,7 @@ bool IsFirstSwapEarliest(size_t fr0, size_t fr1, size_t sr0, size_t sr1)
 // when we would schedule gate g, what would be its start cycle? return it
 // gate operands are real qubit indices
 // is purely functional, doesn't affect state
-size_t StartCycleNoRc(ql::gate *g)
+size_t StartCycleNoRc(std::shared_ptr<ql::gate> g)
 {
     auto&       q = g->operands;
     size_t      operandCount = q.size();
@@ -577,7 +577,7 @@ size_t StartCycleNoRc(ql::gate *g)
 // when we would schedule gate g, what would be its start cycle? return it
 // gate operands are real qubit indices
 // is purely functional, doesn't affect state
-size_t StartCycle(ql::gate *g)
+size_t StartCycle(std::shared_ptr<ql::gate> g)
 {
     size_t      startCycle = StartCycleNoRc(g);
     
@@ -614,7 +614,7 @@ size_t StartCycle(ql::gate *g)
 // gate operands are real qubit indices
 // the FreeCycle map is updated, not the resource map
 // this is done, because AddNoRc is used to represent just gate dependences, avoiding a build of a dep graph
-void AddNoRc(ql::gate *g, size_t startCycle)
+void AddNoRc(std::shared_ptr<ql::gate> g, size_t startCycle)
 {
     auto&       q = g->operands;
     size_t      operandCount = q.size();
@@ -635,7 +635,7 @@ void AddNoRc(ql::gate *g, size_t startCycle)
 // gate operands are real qubit indices
 // both the FreeCycle map and the resource map are updated
 // startcycle must be the result of an earlier StartCycle call (with rc!)
-void Add(ql::gate *g, size_t startCycle)
+void Add(std::shared_ptr<ql::gate> g, size_t startCycle)
 {
     AddNoRc(g, startCycle);
 
@@ -690,7 +690,7 @@ private:
 
     Virt2Real               v2r;        // state: current Virt2Real map, imported/exported to kernel
     FreeCycle               fc;         // state: FreeCycle map (including resource_manager) of this Past
-    typedef ql::gate *      gate_p;
+    typedef std::shared_ptr<ql::gate> gate_p;
     std::list<gate_p>       waitinglg;  // . . .  list of q gates in this Past, topological order, waiting to be scheduled in
                                         //        waitinglg only contains gates from Add and final Schedule call
                                         //        when evaluating alternatives, it is empty when Past is cloned; so no state
@@ -1167,7 +1167,7 @@ void stripname(std::string& name)
     // DOUT("... after stripname name=" << name);
 }
 
-void MakeReal(ql::gate* gp, ql::circuit& circ)
+void MakeReal(std::shared_ptr<ql::gate> gp, ql::circuit& circ)
 {
     std::string gname = gp->name;
     stripname(gname);
@@ -1213,7 +1213,7 @@ void MakeReal(ql::gate* gp, ql::circuit& circ)
 // as mapper after-burner
 // make primitives of all gates that also have an entry with _prim appended to its name
 // and decomposing it according to the .json file gate decomposition
-void MakePrimitive(ql::gate* gp, ql::circuit& circ)
+void MakePrimitive(std::shared_ptr<ql::gate> gp, ql::circuit& circ)
 {
     std::string gname = gp->name;
     stripname(gname);
@@ -1256,7 +1256,7 @@ void FlushAll()
 }
 
 // gp as nonq gate immediately goes to outlg
-void ByPass(ql::gate* gp)
+void ByPass(std::shared_ptr<ql::gate> gp)
 {
     if (!lg.empty())
     {
@@ -1319,7 +1319,7 @@ public:
     size_t                  nq;         // width of Past and Virt2Real map is number of real qubits
     size_t                  ct;         // cycle time, multiplier from cycles to nano-seconds
 
-    ql::gate               *targetgp;   // gate that this variation aims to make NN
+    std::shared_ptr<ql::gate> targetgp; // gate that this variation aims to make NN
     std::vector<size_t>     total;      // full path, including source and target nodes
     std::vector<size_t>     fromSource; // partial path after split, starting at source
     std::vector<size_t>     fromTarget; // partial path after split, starting at target, backward
@@ -2632,13 +2632,13 @@ void Place( ql::circuit& circ, Virt2Real& v2r, ipr_t& result, double& iptimetake
 class Future
 {
 public:
-    const ql::quantum_platform            *platformp;
+    const ql::quantum_platform      *platformp;
     Scheduler                       *schedp;        // a pointer, since dependence graph doesn't change
     ql::circuit                     input_gatepv;   // input circuit when not using scheduler based avlist
 
-    std::map<ql::gate*,bool>        scheduled;      // state: has gate been scheduled, here: done from future?
-    std::list<ListDigraph::Node>    avlist;         // state: which nodes/gates are available for mapping now?
-    ql::circuit::iterator           input_gatepp;   // state: alternative iterator in input_gatepv
+    std::map<std::shared_ptr<ql::gate>,bool> scheduled; // state: has gate been scheduled, here: done from future?
+    std::list<ListDigraph::Node>    avlist;             // state: which nodes/gates are available for mapping now?
+    ql::circuit::iterator           input_gatepp;       // state: alternative iterator in input_gatepv
 
 // just program wide initialization
 void Init( const ql::quantum_platform *p)
@@ -2693,13 +2693,13 @@ void SetCircuit(ql::quantum_kernel& kernel, Scheduler& sched, size_t nq, size_t 
 // Get from avlist all gates that are non-quantum into nonqlg
 // Non-quantum gates include: classical, and dummy (SOURCE/SINK)
 // Return whether some non-quantum gate was found
-bool GetNonQuantumGates(std::list<ql::gate*>& nonqlg)
+bool GetNonQuantumGates(std::list<std::shared_ptr<ql::gate>>& nonqlg)
 {
     nonqlg.clear();
     std::string maplookaheadopt = ql::options::get("maplookahead");
     if ("no" == maplookaheadopt)
     {
-        ql::gate*   gp = *input_gatepp;
+        std::shared_ptr<ql::gate> gp = *input_gatepp;
         if (input_gatepp != input_gatepv.end())
         {
             if (gp->type() == ql::__classical_gate__
@@ -2714,7 +2714,7 @@ bool GetNonQuantumGates(std::list<ql::gate*>& nonqlg)
     {
         for ( auto n : avlist)
         {
-            ql::gate*  gp = schedp->instruction[n];
+            std::shared_ptr<ql::gate> gp = schedp->instruction[n];
             if (gp->type() == ql::__classical_gate__
                 || gp->type() == ql::__dummy_gate__
                 )
@@ -2728,7 +2728,7 @@ bool GetNonQuantumGates(std::list<ql::gate*>& nonqlg)
 
 // Get all gates from avlist into qlg
 // Return whether some gate was found
-bool GetGates(std::list<ql::gate*>& qlg)
+bool GetGates(std::list<std::shared_ptr<ql::gate>>& qlg)
 {
     qlg.clear();
     std::string maplookaheadopt = ql::options::get("maplookahead");
@@ -2736,7 +2736,7 @@ bool GetGates(std::list<ql::gate*>& qlg)
     {
         if (input_gatepp != input_gatepv.end())
         {
-            ql::gate*  gp = *input_gatepp;
+            std::shared_ptr<ql::gate> gp = *input_gatepp;
             if (gp->operands.size() > 2)
             {
                 FATAL(" gate: " << gp->qasm() << " has more than 2 operand qubits; please decompose such gates first before mapping.");
@@ -2748,7 +2748,7 @@ bool GetGates(std::list<ql::gate*>& qlg)
     {
         for ( auto n : avlist)
         {
-            ql::gate*  gp = schedp->instruction[n];
+            std::shared_ptr<ql::gate> gp = schedp->instruction[n];
             if (gp->operands.size() > 2)
             {
                 FATAL(" gate: " << gp->qasm() << " has more than 2 operand qubits; please decompose such gates first before mapping.");
@@ -2761,7 +2761,7 @@ bool GetGates(std::list<ql::gate*>& qlg)
 
 // Indicate that a gate currently in avlist has been mapped, can be taken out of the avlist
 // and its successors can be made available
-void DoneGate(ql::gate* gp)
+void DoneGate(std::shared_ptr<ql::gate> gp)
 {
     std::string maplookaheadopt = ql::options::get("maplookahead");
     if ("no" == maplookaheadopt)
@@ -2776,7 +2776,7 @@ void DoneGate(ql::gate* gp)
 
 // Return gp in lag that is most critical (provided lookahead is enabled)
 // This is used in tiebreak, when every other option has failed to make a distinction.
-ql::gate* MostCriticalIn(std::list<ql::gate*>& lag)
+std::shared_ptr<ql::gate> MostCriticalIn(std::list<std::shared_ptr<ql::gate>>& lag)
 {
     std::string maplookaheadopt = ql::options::get("maplookahead");
     if ("no" == maplookaheadopt)
@@ -2908,7 +2908,7 @@ enum {
 } whichpaths_t;
 
 // Find shortest paths between src and tgt in the grid, bounded by a particular strategy (which)
-void GenShortestPaths(ql::gate* gp, size_t src, size_t tgt, std::list<Alter> & resla, whichpaths_t which)
+void GenShortestPaths(std::shared_ptr<ql::gate> gp, size_t src, size_t tgt, std::list<Alter> & resla, whichpaths_t which)
 {
     std::list<Alter> genla;    // list that will get the result of a recursive Gen call
 
@@ -2991,7 +2991,7 @@ void GenShortestPaths(ql::gate* gp, size_t src, size_t tgt, std::list<Alter> & r
 }
 
 // Generate shortest paths in the grid
-void GenShortestPaths(ql::gate* gp, size_t src, size_t tgt, std::list<Alter> & resla)
+void GenShortestPaths(std::shared_ptr<ql::gate> gp, size_t src, size_t tgt, std::list<Alter> & resla)
 {
     std::string mappathselectopt = ql::options::get("mappathselect");
     if ("all" == mappathselectopt)
@@ -3023,7 +3023,7 @@ void GenSplitPaths(std::list<Alter> & oldla, std::list<Alter> & resla)
 
 // Generate all possible variations of making gp NN, starting from given past (with its mappings),
 // and return the found variations by appending them to the given list of Alters, la
-void GenAltersGate(ql::gate* gp, std::list<Alter>& la, Past& past)
+void GenAltersGate(std::shared_ptr<ql::gate> gp, std::list<Alter>& la, Past& past)
 {
     auto&   q = gp->operands;
     MapperAssert (q.size() == 2);
@@ -3043,7 +3043,7 @@ void GenAltersGate(ql::gate* gp, std::list<Alter>& la, Past& past)
 // Generate all possible variations of making gates in lg NN, starting from given past (with its mappings),
 // and return the found variations by appending them to the given list of Alters, la
 // Depending on maplookahead only take first (most critical) gate or take all gates.
-void GenAlters(std::list<ql::gate*> lg, std::list<Alter>& la, Past& past)
+void GenAlters(std::list<std::shared_ptr<ql::gate>> lg, std::list<Alter>& la, Past& past)
 {
     std::string maplookaheadopt = ql::options::get("maplookahead");
     if ("all" == maplookaheadopt)
@@ -3060,7 +3060,7 @@ void GenAlters(std::list<ql::gate*> lg, std::list<Alter>& la, Past& past)
     else
     {
         // only take the first gate in avlist, the most critical one, and generate alternatives for it
-        ql::gate*  gp = lg.front();
+        std::shared_ptr<ql::gate> gp = lg.front();
         // DOUT("GenAlters, " << lg.size() << " 2q gates; take first: " << gp->qasm());
         GenAltersGate(gp, la, past);  // gen all possible variations to make gp NN, in current v2r mapping ("past")
     }
@@ -3089,12 +3089,12 @@ Alter ChooseAlter(std::list<Alter>& la, Future& future)
     std::string maptiebreakopt = ql::options::get("maptiebreak");
     if ("critical" == maptiebreakopt)
     {
-        std::list<ql::gate*> lag;
+        std::list<std::shared_ptr<ql::gate>> lag;
         for (auto& a : la)
         {
             lag.push_back(a.targetgp);
         }
-        ql::gate*   gp = future.MostCriticalIn(lag);
+        std::shared_ptr<ql::gate> gp = future.MostCriticalIn(lag);
         MapperAssert(gp != NULL);
         for (auto& a : la)
         {
@@ -3138,7 +3138,7 @@ Alter ChooseAlter(std::list<Alter>& la, Future& future)
 }
 
 // Map the gate/operands of a gate that has been routed or doesn't require routing
-void MapRoutedGate(ql::gate* gp, Past& past)
+void MapRoutedGate(std::shared_ptr<ql::gate> gp, Past& past)
 {
     DOUT("MapRoutedGate on virtual: " << gp->qasm() );
 
@@ -3160,7 +3160,7 @@ void MapRoutedGate(ql::gate* gp, Past& past)
 // and taking it out of future when done with it
 void CommitAlter(Alter& resa, Future& future, Past& past)
 {
-    ql::gate*  resgp = resa.targetgp;   // and the 2q target gate then in resgp
+    std::shared_ptr<ql::gate> resgp = resa.targetgp;   // and the 2q target gate then in resgp
     resa.DPRINT("... CommitAlter, alternative to commit, will add swaps and then map target 2q gate");
 
     std::string mapselectswapsopt = ql::options::get("mapselectswaps");
@@ -3198,10 +3198,10 @@ void CommitAlter(Alter& resa, Future& future, Past& past)
 //              == "noroutingfirst":   while (nonq or 1q) map gate; return most critical 2q (nonNN or NN)
 //              == "all":              while (nonq or 1q) map gate; return all 2q (nonNN or NN)
 //
-bool MapMappableGates(Future& future, Past& past, std::list<ql::gate*>& lg, bool alsoNN2q)
+bool MapMappableGates(Future& future, Past& past, std::list<std::shared_ptr<ql::gate>>& lg, bool alsoNN2q)
 {
-    std::list<ql::gate*>   nonqlg; // list of non-quantum gates in avlist
-    std::list<ql::gate*>   qlg;    // list of (remaining) gates in avlist
+    std::list<std::shared_ptr<ql::gate>> nonqlg; // list of non-quantum gates in avlist
+    std::list<std::shared_ptr<ql::gate>> qlg;    // list of (remaining) gates in avlist
 
     DOUT("MapMappableGates entry");
     while (1)
@@ -3436,7 +3436,7 @@ void SelectAlter(std::list<Alter>& la, Alter & resa, Future& future, Past& past,
         a.DPRINT("... ... committed this alternative first before recursion:");
 
         bool    havegates;                  // are there still non-NN 2q gates to map?
-        std::list<ql::gate*> lg;            // list of non-NN 2q gates taken from avlist, as returned from MapMappableGates
+        std::list<std::shared_ptr<ql::gate>> lg; // list of non-NN 2q gates taken from avlist, as returned from MapMappableGates
         std::string maplookaheadopt = ql::options::get("maplookahead");
         std::string maprecNN2qopt = ql::options::get("maprecNN2q");
         // In recursion, look at option maprecNN2q:
@@ -3501,7 +3501,7 @@ void SelectAlter(std::list<Alter>& la, Alter & resa, Future& future, Past& past,
 // and past is the last past (top of recursion stack) relative to which the mapping is done.
 void MapGates(Future& future, Past& past, Past& basePast)
 {
-    std::list<ql::gate*>   lg;              // list of non-mappable gates taken from avlist, as returned from MapMappableGates
+    std::list<std::shared_ptr<ql::gate>> lg;              // list of non-mappable gates taken from avlist, as returned from MapMappableGates
     std::string maplookaheadopt = ql::options::get("maplookahead");
     bool alsoNN2q = ( "noroutingfirst" == maplookaheadopt || "all" == maplookaheadopt );
     while (MapMappableGates(future, past, lg, alsoNN2q))  // returns false when no gates remain

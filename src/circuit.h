@@ -10,52 +10,54 @@
 
 #include <vector>
 #include <iostream>
+#include <memory>
 
 #include "gate.h"
 
 namespace ql
 {
 
-    typedef std::vector<gate*> circuit;
-
-
-    inline void print(circuit& c)
+class circuit : public std::vector<std::shared_ptr<gate>> {
+public:
+    void print() const
     {
         std::cout << "-------------------" << std::endl;
-        for (size_t i=0; i<c.size(); i++)
-        	std::cout << "   " << c[i]->qasm() << std::endl;
+        for (auto &g : *this)
+        {
+            std::cout << "   " << g->qasm() << std::endl;
+        }
         std::cout << "\n-------------------" << std::endl;
     }
 
     /**
      * generate qasm for a given circuit
      */
-    inline std::string qasm(circuit& c)
+    std::string qasm() const
     {
         std::stringstream ss;
-        for (size_t i=0; i<c.size(); ++i)
+        for (auto &g : *this)
         {
-            ss << c[i]->qasm() << "\n";
+            ss << g->qasm() << "\n";
         }
         return ss.str();
     }
 
-    inline std::vector<circuit*> split_circuit(circuit &x)
+    std::vector<circuit> split_circuit() const
     {
         IOUT("circuit decomposition in basic blocks ... ");
-        std::vector<circuit*> cs;
-        cs.push_back(new circuit());
-        for (size_t i=0; i<x.size(); i++)
+        std::vector<circuit> cs;
+        cs.emplace_back();
+        for (auto &g: *this)
         {
-            if ((x[i]->type() == __prepz_gate__) || (x[i]->type() == __measure_gate__))
+            if ((g->type() == __prepz_gate__) || (g->type() == __measure_gate__))
             {
-                cs.push_back(new circuit());
-                cs.back()->push_back(x[i]);
-                cs.push_back(new circuit());
+                cs.emplace_back();
+                cs.back().push_back(g);
+                cs.emplace_back();
             }
             else
             {
-                cs.back()->push_back(x[i]);
+                cs.back().push_back(g);
             }
         }
         IOUT("circuit decomposition done (" << cs.size() << ").");
@@ -72,17 +74,20 @@ namespace ql
     /**
      * detect measurements and qubit preparations
      */
-    inline bool contains_measurements(circuit &x)
+    bool contains_measurements() const
     {
-        for (size_t i=0; i<x.size(); i++)
+        for (auto &g : *this)
         {
-            if (x[i]->type() == __measure_gate__)
+            if (g->type() == __measure_gate__)
                 return true;
-            if (x[i]->type() == __prepz_gate__)
+            if (g->type() == __prepz_gate__)
                 return true;
         }
         return false;
     }
+
+};
+
 }
 
 #endif // CIRCUIT_H

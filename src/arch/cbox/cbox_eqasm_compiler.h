@@ -175,7 +175,7 @@ namespace ql
 
                IOUT("[-] loading instruction settings...");
 
-               for (ql::gate * g : c)
+               for (auto g : c)
                {
                   // COUT( g->name );
                   // COUT( g->qasm() );

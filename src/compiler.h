@@ -30,7 +30,7 @@ public:
     void setPassOption(std::string passName, std::string optionName, std::string optionValue);
     
 private:
-  
+
     void constructPassManager();//TODO: potentially read the IR->Options!
     
     std::string           name;

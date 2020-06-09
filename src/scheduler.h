@@ -89,8 +89,8 @@ public:
     ListDigraph graph;
 
     // conversion between gate* (pointer to the gate in the circuit) and node (of the dependence graph)
-    ListDigraph::NodeMap<ql::gate*> instruction;// instruction[n] == gate*
-    std::map<ql::gate*,ListDigraph::Node>  node;// node[gate*] == n
+    ListDigraph::NodeMap<std::shared_ptr<ql::gate>> instruction;// instruction[n] == gate*
+    std::map<std::shared_ptr<ql::gate>,ListDigraph::Node>  node;// node[gate*] == n
 
     // attributes
     ListDigraph::NodeMap<std::string> name;     // name[n] == qasm string
@@ -169,7 +169,7 @@ public:
         {
             // add dummy source node
             ListDigraph::Node srcNode = graph.addNode();
-            instruction[srcNode] = new ql::SOURCE();    // so SOURCE is defined as instruction[s], not unique in itself
+            instruction[srcNode] = std::make_shared<ql::SOURCE>();    // so SOURCE is defined as instruction[s], not unique in itself
             node[instruction[srcNode]] = srcNode;
             name[srcNode] = instruction[srcNode]->qasm();
             s=srcNode;
@@ -564,7 +564,7 @@ public:
 	        // add dummy target node
 	        ListDigraph::Node consNode = graph.addNode();
 	        int consID = graph.id(consNode);
-	        instruction[consNode] = new ql::SINK();    // so SINK is defined as instruction[t], not unique in itself
+	        instruction[consNode] = std::make_shared<ql::SINK>();    // so SINK is defined as instruction[t], not unique in itself
 	        node[instruction[consNode]] = consNode;
 	        name[consNode] = instruction[consNode]->qasm();
 	        t=consNode;
@@ -714,7 +714,7 @@ public:
     // without RC, this is all there is to schedule, apart from forming the bundles in ql::ir::bundler()
     // set_cycle iterates over the circuit's gates and set_cycle_gate over the dependences of each gate
     // please note that set_cycle_gate expects a caller like set_cycle which iterates gp forward through the circuit
-    void set_cycle_gate(ql::gate* gp, ql::scheduling_direction_t dir)
+    void set_cycle_gate(std::shared_ptr<ql::gate> gp, ql::scheduling_direction_t dir)
     {
         ListDigraph::Node   currNode = node[gp];
         size_t  currCycle;
@@ -778,7 +778,7 @@ public:
         }
     }
 
-    static bool cycle_lessthan(ql::gate* gp1, ql::gate* gp2)
+    static bool cycle_lessthan(std::shared_ptr<ql::gate> gp1, std::shared_ptr<ql::gate> gp2)
     {
         return gp1->cycle < gp2->cycle;
     }
@@ -789,7 +789,7 @@ public:
         DOUT("... before sorting on cycle value");
         // for ( ql::circuit::iterator gpit = cp->begin(); gpit != cp->end(); gpit++)
         // {
-        //     ql::gate*           gp = *gpit;
+        //     std::shared_ptr<ql::gate>           gp = *gpit;
         //     DOUT("...... (@" << gp->cycle << ") " << gp->qasm());
         // }
 
@@ -799,7 +799,7 @@ public:
         DOUT("... after sorting on cycle value");
         // for ( ql::circuit::iterator gpit = cp->begin(); gpit != cp->end(); gpit++)
         // {
-        //     ql::gate*           gp = *gpit;
+        //     std::shared_ptr<ql::gate>           gp = *gpit;
         //     DOUT("...... (@" << gp->cycle << ") " << gp->qasm());
         // }
     }
@@ -864,7 +864,7 @@ public:
     // which is easier in the core of the scheduler.
 
     // Note that set_remaining_gate expects a caller like set_remaining that iterates gp backward over the circuit
-    void set_remaining_gate(ql::gate* gp, ql::scheduling_direction_t dir)
+    void set_remaining_gate(std::shared_ptr<ql::gate> gp, ql::scheduling_direction_t dir)
     {
         ListDigraph::Node   currNode = node[gp];
         size_t              currRemain = 0;
@@ -887,7 +887,7 @@ public:
 
     void set_remaining(ql::scheduling_direction_t dir)
     {
-        ql::gate*   gp;
+        std::shared_ptr<ql::gate>   gp;
         remaining.clear();
         if (ql::forward_scheduling == dir)
         {
@@ -896,7 +896,7 @@ public:
             // *circp is by definition in a topological order of the dependence graph
             for ( ql::circuit::reverse_iterator gpit = circp->rbegin(); gpit != circp->rend(); gpit++)
             {
-                ql::gate*   gp2 = *gpit;
+                std::shared_ptr<ql::gate>   gp2 = *gpit;
                 set_remaining_gate(gp2, dir);
                 DOUT("... remaining at " << gp2->qasm() << " cycles " << remaining[node[gp2]]);
             }
@@ -911,7 +911,7 @@ public:
             // *circp is by definition in a topological order of the dependence graph
             for ( ql::circuit::iterator gpit = circp->begin(); gpit != circp->end(); gpit++)
             {
-                ql::gate*   gp2 = *gpit;
+                std::shared_ptr<ql::gate>   gp2 = *gpit;
                 set_remaining_gate(gp2, dir);
                 DOUT("... remaining at " << gp2->qasm() << " cycles " << remaining[node[gp2]]);
             }
@@ -921,10 +921,10 @@ public:
         }
     }
 
-    ql::gate* find_mostcritical(std::list<ql::gate*>& lg)
+    std::shared_ptr<ql::gate> find_mostcritical(std::list<std::shared_ptr<ql::gate>>& lg)
     {
         size_t      maxRemain = 0;
-        ql::gate*   mostCriticalGate = NULL;
+        std::shared_ptr<ql::gate>   mostCriticalGate = NULL;
         for ( auto gp : lg)
         {
             size_t gr = remaining[node[gp]];
@@ -1145,7 +1145,7 @@ public:
     // update (through MakeAvailable) the cycle attribute of the nodes made available
     // because from then on that value is compared to the curr_cycle to check
     // whether a node has completed execution and thus is available for scheduling in curr_cycle
-    void TakeAvailable(ListDigraph::Node n, std::list<ListDigraph::Node>& avlist, std::map<ql::gate*,bool> & scheduled, ql::scheduling_direction_t dir)
+    void TakeAvailable(ListDigraph::Node n, std::list<ListDigraph::Node>& avlist, std::map<std::shared_ptr<ql::gate>,bool> & scheduled, ql::scheduling_direction_t dir)
     {
         scheduled[instruction[n]] = true;
         avlist.remove(n);
@@ -1218,7 +1218,7 @@ public:
     bool immediately_schedulable(ListDigraph::Node n, ql::scheduling_direction_t dir, const size_t curr_cycle,
                                 const ql::quantum_platform& platform, ql::arch::resource_manager_t& rm, bool& isres)
     {
-        ql::gate*   gp = instruction[n];
+        std::shared_ptr<ql::gate>   gp = instruction[n];
         isres = true;
         // have dependent gates completed at curr_cycle?
         if (    ( ql::forward_scheduling == dir && gp->cycle <= curr_cycle)
@@ -1296,7 +1296,7 @@ public:
         DOUT("Scheduling " << (ql::forward_scheduling == dir?"ASAP":"ALAP") << " with RC ...");
 
         // scheduled[gp] :=: whether gate *gp has been scheduled, init all false
-        std::map<ql::gate*,bool>    scheduled;
+        std::map<std::shared_ptr<ql::gate>,bool>    scheduled;
         // avlist :=: list of schedulable nodes, initially (see below) just s or t
         std::list<ListDigraph::Node>    avlist;
 
@@ -1327,7 +1327,7 @@ public:
             }
 
             // commit selected_node to the schedule
-            ql::gate* gp = instruction[selected_node];
+            std::shared_ptr<ql::gate> gp = instruction[selected_node];
             DOUT("... selected " << gp->qasm() << " in cycle " << curr_cycle);
             gp->cycle = curr_cycle;                     // scheduler result, including s and t
             if (selected_node != s
@@ -1431,10 +1431,10 @@ public:
         // DOUT("Creating gates_per_cycle");
         // create gates_per_cycle[cycle] = for each cycle the list of gates at cycle cycle
         // this is the basic map to be operated upon by the uniforming scheduler below;
-        std::map<size_t,std::list<ql::gate*>> gates_per_cycle;
+        std::map<size_t,std::list<std::shared_ptr<ql::gate>>> gates_per_cycle;
         for ( ql::circuit::iterator gpit = circp->begin(); gpit != circp->end(); gpit++)
         {
-            ql::gate*           gp = *gpit;
+            std::shared_ptr<ql::gate> gp = *gpit;
             gates_per_cycle[gp->cycle].push_back(gp);
         }
 
@@ -1500,7 +1500,7 @@ public:
                 DOUT("pred_cycle=" << pred_cycle);
                 DOUT("gates_per_cycle[curr_cycle].size()=" << gates_per_cycle[curr_cycle].size());
                 size_t      min_remaining_cycle = MAX_CYCLE;
-                ql::gate*   best_predgp;
+                std::shared_ptr<ql::gate>   best_predgp;
                 bool        best_predgp_found = false;
 
                 // scan bundle at pred_cycle to find suitable candidate to move forward to curr_cycle
@@ -1523,7 +1523,7 @@ public:
                     {
                         for ( ListDigraph::OutArcIt arc(graph,pred_node); arc != INVALID; ++arc )
                         {
-                            ql::gate*   target_gp = instruction[graph.target(arc)];
+                            std::shared_ptr<ql::gate>   target_gp = instruction[graph.target(arc)];
                             size_t target_cycle = target_gp->cycle;
                             if(predgp_completion_cycle > target_cycle)
                             {

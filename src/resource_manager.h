@@ -44,8 +44,8 @@ public:
         DOUT("constructing resource: " << n << " for direction (0:fwd,1:bwd): " << dir);
     }
 
-    virtual bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform) = 0;
-    virtual void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform) = 0;
+    virtual bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform) = 0;
+    virtual void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform) = 0;
     virtual ~resource_t() {}
     virtual resource_t* clone() const & = 0;
     virtual resource_t* clone() && = 0;
@@ -117,7 +117,7 @@ public:
         return *this;
     }
 
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
         // DOUT("checking availability of resources for: " << ins->qasm());
         for(auto rptr : resource_ptrs)
@@ -133,7 +133,7 @@ public:
         return true;
     }
 
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
         // DOUT("reserving resources for: " << ins->qasm());
         for(auto rptr : resource_ptrs)
@@ -218,13 +218,13 @@ public:
         return *this;
     }
 
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
         // DOUT("resource_manager.available()");
         return platform_resource_manager_ptr->available(op_start_cycle, ins, platform);
     }
 
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
         // DOUT("resource_manager.reserve()");
         platform_resource_manager_ptr->reserve(op_start_cycle, ins, platform);

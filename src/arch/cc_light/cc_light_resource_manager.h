@@ -28,33 +28,33 @@ namespace arch
 
 // in configuration file, duration is in nanoseconds, while here we prefer it to have it in cycles
 // it is needed to define the extend of the resource occupation in case of multi-cycle operations
-inline size_t ccl_get_operation_duration(ql::gate *ins, const ql::quantum_platform &platform)
+inline size_t ccl_get_operation_duration(const ql::gate &ins, const ql::quantum_platform &platform)
 {
-    return std::ceil( static_cast<float>(ins->duration) / platform.cycle_time);
+    return std::ceil( static_cast<float>(ins.duration) / platform.cycle_time);
 }
 
 
 // operation type is "mw" (for microwave), "flux", or "readout"
 // it reflects the different resources used to implement the various gates and that resource management must distinguish
-inline std::string ccl_get_operation_type(ql::gate *ins, const ql::quantum_platform &platform)
+inline std::string ccl_get_operation_type(const ql::gate &ins, const ql::quantum_platform &platform)
 {
     std::string operation_type("cc_light_type");
-    JSON_ASSERT(platform.instruction_settings, ins->name, ins->name);
-    if ( !platform.instruction_settings[ins->name]["type"].is_null() )
+    JSON_ASSERT(platform.instruction_settings, ins.name, ins.name);
+    if ( !platform.instruction_settings[ins.name]["type"].is_null() )
     {
-        operation_type = platform.instruction_settings[ins->name]["type"];
+        operation_type = platform.instruction_settings[ins.name]["type"];
     }
     return operation_type;
 }
 
 // operation name is used to know which operations are the same when one qwg steers several qubits using the vsm
-inline std::string ccl_get_operation_name(ql::gate *ins, const ql::quantum_platform &platform)
+inline std::string ccl_get_operation_name(const ql::gate &ins, const ql::quantum_platform &platform)
 {
-    std::string operation_name(ins->name);
-    JSON_ASSERT(platform.instruction_settings, ins->name, ins->name);
-    if ( !platform.instruction_settings[ins->name]["cc_light_instr"].is_null() )
+    std::string operation_name(ins.name);
+    JSON_ASSERT(platform.instruction_settings, ins.name, ins.name);
+    if ( !platform.instruction_settings[ins.name]["cc_light_instr"].is_null() )
     {
-        operation_name = platform.instruction_settings[ins->name]["cc_light_instr"];
+        operation_name = platform.instruction_settings[ins.name]["cc_light_instr"];
     }
     return operation_name;
 }
@@ -86,10 +86,10 @@ public:
         }
     }
 
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
-        std::string operation_type = ccl_get_operation_type(ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
 
         for( auto q : ins->operands )
         {
@@ -116,10 +116,10 @@ public:
         return true;
     }
 
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         for( auto q : ins->operands )
         {
@@ -177,11 +177,11 @@ public:
         }
     }
 
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        std::string operation_name = ccl_get_operation_name(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        std::string operation_name = ccl_get_operation_name(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         bool is_mw = (operation_type == "mw");
         if( is_mw )
@@ -213,11 +213,11 @@ public:
         return true;
     }
 
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        std::string operation_name = ccl_get_operation_name(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        std::string operation_name = ccl_get_operation_name(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         bool is_mw = (operation_type == "mw");
         if( is_mw )
@@ -294,10 +294,10 @@ public:
         }
     }
 
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         bool is_measure = (operation_type == "readout");
         if( is_measure )
@@ -337,10 +337,10 @@ public:
         return true;
     }
 
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         bool is_measure = (operation_type == "readout");
         if( is_measure )
@@ -419,10 +419,10 @@ public:
         }
     }
 
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         auto gname = ins->name;
         bool is_flux = (operation_type == "flux");
@@ -482,10 +482,10 @@ public:
         return true;
     }
 
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         auto gname = ins->name;
         bool is_flux = (operation_type == "flux");
@@ -616,10 +616,10 @@ public:
 
     // When a two-qubit flux gate, check whether the qubits it would detune are not busy with a rotation.
     // When a one-qubit rotation, check whether the qubit is not detuned (busy with a flux gate).
-    bool available(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    bool available(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         auto gname = ins->name;
         bool is_flux = (operation_type == "flux");
@@ -716,10 +716,10 @@ public:
 
     // A two-qubit flux gate must set the qubits it would detune to detuned, busy with a flux gate.
     // A one-qubit rotation gate must set its operand qubit to busy, busy with a rotation.
-    void reserve(size_t op_start_cycle, ql::gate * ins, const ql::quantum_platform & platform)
+    void reserve(size_t op_start_cycle, std::shared_ptr<ql::gate> ins, const ql::quantum_platform & platform)
     {
-        std::string operation_type = ccl_get_operation_type(ins, platform);
-        size_t      operation_duration = ccl_get_operation_duration(ins, platform);
+        std::string operation_type = ccl_get_operation_type(*ins, platform);
+        size_t      operation_duration = ccl_get_operation_duration(*ins, platform);
 
         auto gname = ins->name;
         bool is_flux = (operation_type == "flux");
